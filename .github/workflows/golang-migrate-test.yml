@@ -1,0 +1,56 @@
+name: Run golang-migrate for testing
+
+on:
+  push:
+    branches:
+      - main
+      - release
+      - 'feat/*'
+      - 'fix/*'
+      - 'refactor/*'
+      - 'chore/*'
+  pull_request:
+    branches:
+      - '*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16.1
+        env:
+          POSTGRES_DB: jubo
+          POSTGRES_USER: user
+          POSTGRES_PASSWORD: password
+        ports:
+          - 5431:5432
+        # Set health checks to wait until postgres has started
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        volumes:
+          - /migrations:/migrations
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+    - name: Run migrations(up and down)
+      run: |
+        psql -c 'CREATE SCHEMA IF NOT EXISTS jubo; CREATE EXTENSION IF NOT EXISTS "pgcrypto" WITH SCHEMA jubo;'
+        curl -L https://github.com/golang-migrate/migrate/releases/download/v4.15.2/migrate.linux-amd64.tar.gz | tar xvz
+        sudo mv migrate /usr/bin/
+        export POSTGRES_DB_URL=postgresql://${PGUSER}:${PGPASSWORSD}@localhost:${PGPORT}/${PGDATABASE}?sslmode=disable
+        echo "Migrate by up command"
+        migrate -path ./migrations -database ${POSTGRES_DB_URL} up
+        echo "Rollback by down command"
+        migrate -path ./migrations -database postgresql://${PGUSER}:${PGPASSWORSD}@localhost:${PGPORT}/${PGDATABASE}?sslmode=disable down -all
+      env:
+        PGDATABASE: jubo
+        PGUSER: user
+        PGPASSWORD: password
+        PGHOST: localhost
+        PGPORT: 5431

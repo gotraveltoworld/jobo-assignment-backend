@@ -1,0 +1,38 @@
+{
+  "env": {
+    "test": {
+      "plugins": [
+        "@babel/plugin-transform-modules-commonjs"
+      ]
+    }
+  },
+  "presets": [["@babel/preset-env",
+    {
+      "targets": {
+
+        "node": "16"
+      }
+    }]],
+  "plugins": [
+    [
+      "@babel/plugin-transform-runtime",
+      {
+        "corejs": false
+      }
+    ],
+    [
+      "babel-plugin-module-resolver",
+      {
+        "alias": {
+          "#src": "./src",
+          "#constants": "./src/constants",
+          "#middlewares": "./src/middlewares",
+          "#models": "./src/models",
+          "#utils": "./src/utils",
+          "#validators": "./src/validators",
+          "#errors": "./src/utils/errors.js"
+        }
+      }
+    ]
+  ]
+}

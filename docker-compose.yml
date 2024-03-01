@@ -1,0 +1,48 @@
+version: "3.9"
+
+services:
+  jubo-service:
+    build:
+      context: .
+      dockerfile: Dockerfile.local
+    labels:
+      name: "jubo-docker.local"
+    environment:
+      NODE_ENV: "localhost"
+      PORT: ${PORT-3001}
+      DB_USER: "user"
+      DB_PWD: "password"
+      DB_NAME: "jubo"
+      DB_HOST: "postgres"
+      DB_PORT: 5432
+    ports:
+      - "${PORT:-3001}:${PORT:-3001}"
+    volumes:
+      - ./config:/app/config
+    depends_on:
+      - postgres
+    links:
+      - postgres
+  postgres:
+    image: postgres:16.1
+    environment:
+      POSTGRES_DB: jubo
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    ports:
+      - 5432:5432
+    volumes:
+      - ./scripts/sql:/docker-entrypoint-initdb.d/
+    healthcheck:
+      test: pg_isready -U user -d jubo
+      interval: 5s
+      timeout: 2s
+      retries: 5
+  migrate:
+    image: migrate/migrate
+    command: [ "-path", "/migrations", "-database",  "postgresql://user:password@postgres:5432/jubo?sslmode=disable", "up" ]
+    volumes:
+      - ./migrations:/migrations
+    restart: on-failure
+    depends_on:
+      - postgres

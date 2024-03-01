@@ -1,0 +1,14 @@
+FROM node:20.11.0-alpine3.18 AS builder
+WORKDIR /app
+COPY ["package.json", "package-lock.json", "prepare.cjs", "./"]
+RUN npm run build
+
+FROM node:20.11.0-alpine3.18 AS deployment
+WORKDIR /app
+COPY ["package.json", "app.js", "server.js", "./"]
+COPY src src
+COPY config config
+COPY --from=builder /app/node_modules ./node_modules
+RUN adduser -D user && chown -R user /app
+USER user
+CMD [ "npm", "run", "start" ]

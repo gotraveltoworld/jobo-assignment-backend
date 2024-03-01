@@ -1,0 +1,4 @@
+SET SCHEMA 'jubo';
+
+DROP TABLE IF EXISTS orders;
+DROP TABLE IF EXISTS patients;
